@@ -1,71 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>
-(function () {
-  // Use your idHAL if you have one, e.g. 'authIdHal_s:tatiana-aljamous'
-  const QUERY = 'authFullName_t:"tatiana-aljamous"';
-  const MY_NAME = "Tatiana Aljamous";
 
-  const params = new URLSearchParams({
-    q: QUERY,
-    fl: "title_s,authFullName_s,producedDate_s,producedDateY_i,conferenceTitle_s,journalTitle_s,city_s,country_s,uri_s,doiId_s",
-    sort: "producedDate_tdate desc",
-    rows: 200,
-    wt: "json"
-  });
-
-  const container = document.getElementById("hal-publications");
-  const countryName = new Intl.DisplayNames(["en"], { type: "region" });
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-  const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-
-  function formatDate(d) {
-    if (!d) return "";
-    const [y, m] = d.split("-");
-    return m ? `${months[parseInt(m, 10) - 1]} ${y}` : y;
-  }
-
-  function formatPub(p) {
-    const authors = (p.authFullName_s || []).map(a =>
-      norm(a) === norm(MY_NAME)
-        ? `<b style="color: #e87532;">${esc(a)}</b>`
-        : esc(a)
-    ).join(", ");
-
-    const title = esc(p.title_s?.[0] || "Untitled");
-    const link = p.doiId_s ? `https://doi.org/${p.doiId_s}` : p.uri_s;
-    const venue = p.conferenceTitle_s || p.journalTitle_s || "";
-    const country = p.country_s ? countryName.of(p.country_s.toUpperCase()) : "";
-
-    const parts = [formatDate(p.producedDate_s), p.city_s, country]
-      .filter(Boolean).map(esc).join(", ");
-
-    return `
-      <div class="faq-item faq-active">
-        <div class="faq-content">
-          <p>${authors}. <a href="${esc(link)}" target="_blank" rel="noopener">${title}</a>.
-          ${venue ? esc(venue) + (parts ? ", " : ".") : ""}${parts ? parts + "." : ""}</p>
-        </div>
-      </div>`;
-  }
-
-  fetch("https://api.archives-ouvertes.fr/search/?" + params)
-    .then(r => r.json())
-    .then(data => {
-      const docs = data.response.docs;
-      container.innerHTML = docs.length
-        ? docs.map(formatPub).join("")
-        : "<p>No publications found.</p>";
-      if (window.AOS) AOS.refresh();
-    })
-    .catch(() => {
-      container.innerHTML = "<p>Could not load publications from HAL.</p>";
-    });
-})();
-</script>
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -589,6 +524,74 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+
+  <!-- HAL publications -->
+  <script>
+  (function () {
+    // Use your idHAL if you have one, e.g. 'authIdHal_s:tatiana-aljamous'
+    const QUERY = 'authFullName_t:"Tatiana Aljamous"';
+    const MY_NAME = "Tatiana Aljamous";
+  
+    const params = new URLSearchParams({
+      q: QUERY,
+      fl: "title_s,authFullName_s,producedDate_s,producedDateY_i,conferenceTitle_s,journalTitle_s,city_s,country_s,uri_s,doiId_s",
+      sort: "producedDate_tdate desc",
+      rows: 200,
+      wt: "json"
+    });
+  
+    const container = document.getElementById("hal-publications");
+    const countryName = new Intl.DisplayNames(["en"], { type: "region" });
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  
+    function formatDate(d) {
+      if (!d) return "";
+      const [y, m] = d.split("-");
+      return m ? `${months[parseInt(m, 10) - 1]} ${y}` : y;
+    }
+  
+    function formatPub(p) {
+      const authors = (p.authFullName_s || []).map(a =>
+        norm(a) === norm(MY_NAME)
+          ? `<b style="color: #e87532;">${esc(a)}</b>`
+          : esc(a)
+      ).join(", ");
+  
+      const title = esc(p.title_s?.[0] || "Untitled");
+      const link = p.doiId_s ? `https://doi.org/${p.doiId_s}` : p.uri_s;
+      const venue = p.conferenceTitle_s || p.journalTitle_s || "";
+      const country = p.country_s ? countryName.of(p.country_s.toUpperCase()) : "";
+  
+      const parts = [formatDate(p.producedDate_s), p.city_s, country]
+        .filter(Boolean).map(esc).join(", ");
+  
+      return `
+        <div class="faq-item faq-active">
+          <div class="faq-content">
+            <p>${authors}. <a href="${esc(link)}" target="_blank" rel="noopener">${title}</a>.
+            ${venue ? esc(venue) + (parts ? ", " : ".") : ""}${parts ? parts + "." : ""}</p>
+          </div>
+        </div>`;
+    }
+  
+    fetch("https://api.archives-ouvertes.fr/search/?" + params)
+      .then(r => r.json())
+      .then(data => {
+        const docs = data.response.docs;
+        container.innerHTML = docs.length
+          ? docs.map(formatPub).join("")
+          : "<p>No publications found.</p>";
+        if (window.AOS) AOS.refresh();
+      })
+      .catch(() => {
+        container.innerHTML = "<p>Could not load publications from HAL.</p>";
+      });
+  })();
+  </script>
 
 </body>
 
